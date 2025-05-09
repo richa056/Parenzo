@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = "mongodb://Devananda:DEV1234@ac-5lw4ngo-shard-00-00.fcqxirc.mongodb.net:27017,ac-5lw4ngo-shard-00-01.fcqxirc.mongodb.net:27017,ac-5lw4ngo-shard-00-02.fcqxirc.mongodb.net:27017/parenzo?ssl=true&replicaSet=atlas-v3wlmq-shard-0&authSource=admin&retryWrites=true&w=majority"
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  role          Role      @default(USER)
+  exerciseRecords ExerciseRecord[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  breastfeeding Breastfeeding[]
+  messages      Message[]
+  therapyNotes  TherapyNote[]
+}
+
+model Breastfeeding {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  startTime DateTime
+  endTime   DateTime?
+  side      String
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  from      String   @db.ObjectId
+  to        String   @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [from], references: [id])
+}
+
+model TherapyNote {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model ExerciseRecord {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  date        DateTime
+  exerciseType String
+  duration    Int
+  intensity   String
+  energyLevel Int
+  discomfort  String
+  notes       String?
+  analysis    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum Role {
+  MOM
+  DAD
+  MEDICAL_MONITOR
+  USER
+} 
